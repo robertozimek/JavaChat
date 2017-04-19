@@ -2,6 +2,7 @@ package com.robertozimek.chatserver;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 /**
  * @author      Robert Ozimek
@@ -10,7 +11,13 @@ import java.net.ServerSocket;
 
 public class ChatServer implements Runnable {
     private ServerSocket serverSocket = null;
+    private Thread clientWaitingThread = null;
+    private ChatThread chatClient = null;
     
+    /*
+     * ChatServer Constructor
+     * @param port port the server should listen on for new clients
+     */
     
     public ChatServer(int port) {
         try {
@@ -22,10 +29,33 @@ public class ChatServer implements Runnable {
         }
     }
     
-
+    
     @Override
     public void run() {
-        // TODO Auto-generated method stub
+        while(clientWaitingThread != null) {
+            try {
+                System.out.println("Waiting for client...");
+                addChatThread(serverSocket.accept());
+            } catch (IOException e) {
+                System.out.println("Error accepting cleint: " + e);
+            }
+        }
         
+    }
+    
+    /*
+     * Creates a thread for a client
+     * @param socket Socket client was accepted on
+     */
+    
+    public void addChatThread(Socket socket) {
+        System.out.println("Client accepted on socket: " + socket);
+        chatClient = new ChatThread(socket);
+        try {
+            chatClient.openStream();
+            chatClient.start();
+        } catch (IOException e){
+            System.out.println("Error starting thread: " + e);
+        }
     }
 }
